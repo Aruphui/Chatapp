@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+            background-image: url('images/chat-background.jpg');
+            background-size: cover;
+        }
+        #chat-container {
+            width: 90%;
+            max-width: 600px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            border-bottom: 2px solid #eee;
+            background-image: url('images/message-background.jpg'); /* Background image for messages */
+            background-size: cover;
+            background-position: center;
+        }
+        #messages li {
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            border-radius: 20px;
+            background-color: #f0f2f5; /* Light background for messages */
+            width: fit-content;
+            max-width: 80%;
+            color: #333; /* Ensure text is readable */
+        }
+        #messages li.sent {
+            background-color: #dcf8c6;
+            margin-left: auto;
+            margin-right: 0;
+        }
+        #form {
+            display: flex;
+            padding: 10px;
+            background: white;
+        }
+        #input, #username {
+            flex: 1;
+            padding: 10px;
+            margin: 0 10px 0 0;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+        }
+        #input:focus, #username:focus {
+            border-color: #bbb;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <ul id="messages"></ul>
+        <form id="form" action="">
+            <input id="username" autocomplete="off" placeholder="Username" disabled value="You">
+            <input id="input" autocomplete="off" placeholder="Type your message...">
+            <button>Send</button>
+        </form>
+    </div>
+
+    <script>
+        var socket = io();
+        var form = document.getElementById('form');
+        var input = document.getElementById('input');
+        var username; // No longer need the username input
+        var messages = document.getElementById('messages');
+
+        // Prompt for user's name and keep it
+        while (!username) {
+            username = prompt("What's your name?");
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit('sendMessage', { username: username, message: input.value });
+                addMessage("You", input.value, true); // Add as 'sent' message
+                input.value = '';
+            }
+        });
+
+        socket.on('message', function(data) {
+            if (data.username === username) {
+                // If the message is from the user, don't add it again
+                return;
+            }
+            addMessage(data.username, data.message, false);
+        });
+
+        function addMessage(sender, message, isSent) {
+            var item = document.createElement('li');
+            item.textContent = `${sender}: ${message}`;
+            if (isSent) {
+                item.className = 'sent';
+                item.textContent = `You: ${message}`; // Change display to "You" for messages sent by the user
+            }
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    </script>
+</body>
