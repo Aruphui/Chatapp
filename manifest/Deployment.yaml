@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatapp
+  labels:
+    app: chatapp
+    tier: frontend
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: chatapp
+      labels:
+        app: chatapp
+    spec:
+      containers:
+        - name: chatapp
+          image: huiarup/chatapp:11
+          ports:
+            - containerPort: 5001
+  selector:
+   matchLabels:
+    app: chatapp
