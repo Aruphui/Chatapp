@@ -1,61 +1,59 @@
 pipeline {
-    agent any
-    environment {
+    agent any 
+        environment {
         // Define your image name and tag using environment variables
         IMAGE_NAME = 'huiarup/chatapp'
-<<<<<<< HEAD
-        DOCKER_CREDENTIALS_ID = 'DockerID' 
-    }
-    stages{
-        stage (Build){
-            steps {
-                sh 'docker build -t {IMAGE_NAME}:${BUILD_NUMBER} .'
-            }
-        
-        stage (Push){
-            steps {
-                scripts{
-=======
-        DOCKER_CREDENTIALS_ID = 'DockerID'
-    }
-    stages {
-        stage('Git Checkout') {
-            steps {
-                script {
-                    git branch: 'master',
-                        url: 'https://github.com/Aruphui/Chatapp.git'
+        DOCKER_CREDENTIALS_ID = 'DockerPW'
+        }
+        stages {
+            stage ('Checkout from GIT') {
+                steps {
+                   git url: 'https://github.com/Aruphui/Chatapp.git'
                 }
             }
-        }
-        stage ('Build') {
-            steps {
-                // Corrected shell command to properly handle variable substitution
-                sh "docker build -t ${env.IMAGE_NAME}:\${BUILD_NUMBER} ."
-            }
-        }
-        stage('Push the artifacts') {
-            steps {
-                script {
-                    // Login to Docker registry before pushing
->>>>>>> 2c11c1a (added yaml code)
-                    sh "echo 'Push to Repo'"
-                    docker.withRegistry('', DOCKER_CREDENTIALS_ID) {
-                        // Define the docker image variable based on the built image
-                        def dockerImage = docker.image("${IMAGE_NAME}:${BUILD_NUMBER}")
-                        dockerImage.push()
-<<<<<<< HEAD
+            stage ('Build Docker Image') {
+                steps {
+                    sh "docker build -t ${env.IMAGE_NAME}:${BUILD_NUMBER} ."
                 }
-            
+                
             }
-
-        }
-    }
+            stage ('Push Image to DockerHub') {
+                steps {
+                    withCredentials([string(credentialsId: 'DockerPW', variable: 'DockerPW')]) {
+                    sh "docker login -u huiarup -p ${DockerPW}"
+                    sh "docker push ${env.IMAGE_NAME}:${BUILD_NUMBER}"
 }
-=======
-                    }
+                    
                 }
             }
-        }
-    }
+             stage ('Change K8s File') {
+                steps {
+                    sh "chmod +x imageversionchange.sh"
+                    sh " ./imageversionchange.sh ${BUILD_NUMBER}"
+                  
 }
->>>>>>> 2c11c1a (added yaml code)
+             }
+stage('Update Deployment File') {
+        environment {
+            GIT_REPO_NAME = "Chatapp"
+            GIT_USER_NAME = "Aruphui"
+        }
+ steps {
+            withCredentials([string(credentialsId: 'Git', variable: 'GITHUB_TOKEN')]) {
+                sh '''
+                    git config user.email "arupjyoti699@gmail.com"
+                    git config user.name "Aruphui"
+                    BUILD_NUMBER=${BUILD_NUMBER}
+                    sed "s/tagVersion/${BUILD_NUMBER}/g" manifest/Deployment.yaml > BuildNoChangeManifest/manifest.yaml
+                    git add BuildNoChangeManifest/manifest.yaml
+                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:master
+                '''
+            }
+        }
+                    
+                }
+                
+            }
+        }
+    
