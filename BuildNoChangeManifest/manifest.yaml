@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: chatapp
-          image: huiarup/chatapp:19
+          image: huiarup/chatapp:20
           ports:
             - containerPort: 5001
   selector:
